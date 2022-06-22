@@ -1,6 +1,9 @@
 import dataclasses
 import enum
 import itertools
+import math
+import random
+import typing
 from typing import Optional, Iterable, Iterator
 
 
@@ -54,6 +57,27 @@ class Interval:
         return self.lower_bound > self.upper_bound or\
                ((self.upper_bound_type == Bound.OPEN or self.lower_bound_type == Bound.OPEN) and
                 self.lower_bound == self.upper_bound)
+
+    def sample(self) -> float:
+        assert self.lower_bound > -math.inf and self.upper_bound < math.inf
+        assert not self.is_empty
+        return random.random() * self.length + self.lower_bound
+
+    def __lt__(self, other: typing.Union[float, 'Interval']):
+        assert not self.is_empty    # TODO: should we return True in this case?
+        if isinstance(other, Interval):
+            assert not other.is_empty
+            return self.upper_bound < other.lower_bound or self.upper_bound == other.lower_bound and \
+                   (self.upper_bound_type == Bound.OPEN or other.lower_bound_type == Bound.OPEN)
+        return self.upper_bound < other or self.upper_bound == other and self.upper_bound_type == Bound.OPEN
+
+    def __gt__(self, other: typing.Union[float, 'Interval']):
+        assert not self.is_empty    # TODO: should we return True in this case?
+        if isinstance(other, Interval):
+            assert not other.is_empty
+            return self.lower_bound > other.upper_bound or self.lower_bound == other.upper_bound and \
+                   (self.lower_bound_type == Bound.OPEN or other.upper_bound_type == Bound.OPEN)
+        return self.lower_bound > other or self.lower_bound == other and self.lower_bound_type == Bound.OPEN
 
     def split(self, values: list[float], upper_bounds: Bound = Bound.OPEN, lower_bounds: Bound = Bound.CLOSED) -> \
             Iterator['Interval']:

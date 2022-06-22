@@ -1,3 +1,4 @@
+import math
 import unittest
 
 from pyutils.intervals import Interval, Bound
@@ -36,6 +37,34 @@ class TestIntervals(unittest.TestCase):
                                  [Interval.open_closed(-4, 5), Interval.open_closed(5, 12)])
         self.assert_split_result(list(interval.split([5, 7], upper_bounds=Bound.CLOSED, lower_bounds=Bound.OPEN)),
                                  [Interval.open_closed(-4, 5), Interval.open_closed(5, 7), Interval.open_closed(7, 12)])
+
+    def test_sample(self):
+        interval = Interval.closed(5, 5)
+        self.assertAlmostEqual(interval.sample(), 5.0, places=10)
+        self.assertRaises(AssertionError, Interval.open(5, 5).sample)
+        self.assertRaises(AssertionError, Interval.open(-math.inf, 5).sample)
+        interval = Interval.closed_open(3, 6)
+        self.assertIn(interval.sample(), interval)
+
+    def test_compare(self):
+        self.assertTrue(Interval.open(3, 5) < 10)
+        self.assertTrue(Interval.open(3, 5) < 5)
+        self.assertFalse(Interval.open(3, 5) < 4)
+        self.assertFalse(Interval.open(3, 5) < 2)
+        self.assertFalse(Interval.closed(3, 5) < 5)
+
+        self.assertTrue(Interval.open(3, 5) > 1)
+        self.assertTrue(Interval.open(3, 5) > 3)
+        self.assertFalse(Interval.open(3, 5) > 4)
+        self.assertFalse(Interval.open(3, 5) > 10)
+        self.assertFalse(Interval.closed(3, 5) > 3)
+
+        self.assertTrue(Interval.open(3, 5) < Interval.open(5, 8))
+        self.assertTrue(Interval.open(3, 5) < Interval.closed(5, 8))
+        self.assertTrue(Interval.open(3, 5) > Interval.open(2, 3))
+        self.assertFalse(Interval.closed(3, 5) < Interval.closed(5, 8))
+        self.assertFalse(Interval.open(3, 5) > Interval.open(2, 4))
+        self.assertFalse(Interval.open(3, 5) < Interval.open(2, 4))
 
 
 if __name__ == '__main__':
