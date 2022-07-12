@@ -4,11 +4,11 @@ import typing
 
 class Point(abc.ABC):
     @abc.abstractmethod
-    def __add__(self, other: 'Vec') -> 'Point':   # TODO: switch to typing.Self in python 3.11
+    def __add__(self, other) -> 'Point':   # TODO: switch to typing.Self in python 3.11, especially for other
         raise NotImplemented
 
     @abc.abstractmethod
-    def __sub__(self, other: 'Point') -> 'Vec':
+    def __sub__(self, other) -> 'Vec':
         raise NotImplemented
 
 
@@ -30,9 +30,9 @@ class Shape(typing.Generic[P], abc.ABC):
     def __contains__(self, point: P) -> bool:
         raise NotImplemented
 
-    def __iter__(self) -> typing.Iterator[P]:
-        raise NotImplemented
-
     def sample(self) -> P:
         # return a point of the shape picked uniformly random
+        raise NotImplemented
+
+    def __iter__(self) -> typing.Iterator[P]:
         raise NotImplemented

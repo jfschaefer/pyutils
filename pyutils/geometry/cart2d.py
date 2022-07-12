@@ -26,9 +26,6 @@ class Point2d(typing.Generic[T], abstract.Point):
         return Vec2d(self.x - other.x, self.y - other.y)
 
 
-IntPoint2d = Point2d[int]
-
-
 @dataclasses.dataclass(frozen=True)
 class Vec2d(typing.Generic[T], abstract.Vec[Point2d[T]]):
     """ The vector (x, y) in a cartesian coordinate system """
@@ -43,10 +40,6 @@ class Vec2d(typing.Generic[T], abstract.Vec[Point2d[T]]):
         return math.sqrt(self.x * self.x + self.y * self.y)
 
 
-class IntVec2d(Vec2d[int]):
-    pass
-
-
 @dataclasses.dataclass(frozen=True)
 class Rect(typing.Generic[T], abstract.Shape[Point2d[T]]):
     """ The rectangle [x0, x1] x [y0, y1] in a cartesian coordinate system """
@@ -59,6 +52,11 @@ class Rect(typing.Generic[T], abstract.Shape[Point2d[T]]):
     def __contains__(self, point: Point2d[T]) -> bool:
         return self.x0 <= point.x <= self.x1 and self.y0 <= point.y <= self.y1
 
+    def __iter__(self) -> typing.Iterator[Point2d[T]]:
+        for x in range(math.ceil(self.x0), math.floor(self.x1 + 1)):
+            for y in range(math.ceil(self.y0), math.floor(self.y1 + 1)):
+                yield Point2d(x, y)
+
     @property
     def width(self) -> T:
         return self.x1 - self.x0
@@ -69,10 +67,5 @@ class Rect(typing.Generic[T], abstract.Shape[Point2d[T]]):
 
 
 class IntRect(Rect[int]):
-    def __iter__(self) -> typing.Iterator[Point2d[int]]:
-        for x in range(self.x0, self.x1 + 1):
-            for y in range(self.y0, self.y1 + 1):
-                yield Point2d[int](x, y)
-
     def sample(self) -> Point2d[int]:
         return Point2d(random.randint(self.x0, self.x1), random.randint(self.y0, self.y1))

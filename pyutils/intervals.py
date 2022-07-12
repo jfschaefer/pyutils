@@ -4,7 +4,7 @@ import itertools
 import math
 import random
 import typing
-from typing import Optional, Iterable, Iterator
+from typing import Optional, Iterator
 
 
 class Bound(enum.Enum):
@@ -36,6 +36,7 @@ class Interval:
 
     def relaxed_interval(self, amount: float) -> 'Interval':
         """ Returns the interval "relaxed" by a certain amount (ε).
+
             This is supposed to allow some room for rounding errors.
             Concretely, intervals will be relaxed in the following way:
                 (a, b) ↦ (a+ε, b-ε)
