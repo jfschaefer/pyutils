@@ -50,8 +50,15 @@ exclude_patterns = []
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
-html_theme = 'alabaster'
+
+# see https://www.sphinx-doc.org/en/master/usage/theming.html#builtin-themes
+
+html_theme = 'classic'
+html_theme_options = {
+    # 'body_min_width': 600,
+    'body_max_width': 1000,
+    'sidebarwidth': 300,
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
