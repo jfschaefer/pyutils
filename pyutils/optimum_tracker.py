@@ -11,7 +11,7 @@ class OptimumTracker(typing.Generic[_T], abc.ABC):
 
     @abc.abstractmethod
     def update(self, candidate: _T, evaluation: float) -> bool:
-        raise NotImplemented
+        raise NotImplementedError()
 
     def nongreedy_update(self, candidate: _T, evaluation: float) -> bool:
         """ The update method is greedy (mostly to ensure that `best` is set as soon as possible).

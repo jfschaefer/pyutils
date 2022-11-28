@@ -47,24 +47,35 @@ class TestIntervals(unittest.TestCase):
         self.assertIn(interval.sample(), interval)
 
     def test_compare(self):
+        # interval < number
         self.assertTrue(Interval.open(3, 5) < 10)
         self.assertTrue(Interval.open(3, 5) < 5)
         self.assertFalse(Interval.open(3, 5) < 4)
         self.assertFalse(Interval.open(3, 5) < 2)
         self.assertFalse(Interval.closed(3, 5) < 5)
 
+        # interval > number
         self.assertTrue(Interval.open(3, 5) > 1)
         self.assertTrue(Interval.open(3, 5) > 3)
         self.assertFalse(Interval.open(3, 5) > 4)
         self.assertFalse(Interval.open(3, 5) > 10)
         self.assertFalse(Interval.closed(3, 5) > 3)
 
+        # interval < interval
         self.assertTrue(Interval.open(3, 5) < Interval.open(5, 8))
         self.assertTrue(Interval.open(3, 5) < Interval.closed(5, 8))
         self.assertTrue(Interval.open(3, 5) > Interval.open(2, 3))
         self.assertFalse(Interval.closed(3, 5) < Interval.closed(5, 8))
         self.assertFalse(Interval.open(3, 5) > Interval.open(2, 4))
         self.assertFalse(Interval.open(3, 5) < Interval.open(2, 4))
+
+        # number > or < interval
+        self.assertTrue(8 > Interval.open(3, 5))
+        self.assertFalse(4 > Interval.open(3, 5))
+        self.assertFalse(2 > Interval.open(3, 5))
+        self.assertFalse(8 < Interval.open(3, 5))
+        self.assertFalse(4 < Interval.open(3, 5))
+        self.assertTrue(2 < Interval.open(3, 5))
 
 
 if __name__ == '__main__':

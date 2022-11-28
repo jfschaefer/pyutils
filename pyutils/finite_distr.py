@@ -22,7 +22,7 @@ Example:
     >>> p.verify()      # check if the distribution is valid
     Traceback (most recent call last):
         ...
-    pyutils.finite_distr.InvalidDistributionException: The probabilities do not sum up to 1
+    pyutils.finite_distr.InvalidDistributionError: The probabilities do not sum up to 1
  """
 from __future__ import annotations
 
@@ -31,19 +31,15 @@ import random
 from collections import Counter
 from typing import TypeVar, Generic, Optional, Iterable
 
-__all__ = ['InvalidDistributionException', 'EmptyDistributionException', 'FDistr']
+__all__ = ['InvalidDistributionError', 'EmptyDistributionError', 'FDistr']
 
 
-class InvalidDistributionException(Exception):
+class InvalidDistributionError(Exception):
     """ The distribution is not a valid probability distribution. """
 
 
-class EmptyDistributionException(InvalidDistributionException):
+class EmptyDistributionError(InvalidDistributionError):
     """ An operation is not permitted because the distribution is empty. """
-
-
-class BadArgumentException(Exception):
-    """ An argument does not meet the method's excpections. """
 
 
 T = TypeVar('T')
@@ -64,12 +60,12 @@ class FDistr(Generic[T], dict[T, float]):
         if not hasattr(elements, '__len__'):   # we need to know the length for efficient normalization
             elements = list(elements)
         if not elements:
-            raise EmptyDistributionException('Cannot generate a uniform distribution over the empty set.')
+            raise EmptyDistributionError('Cannot generate a uniform distribution over the empty set.')
         number = len(elements)  # type: ignore
         prob = 1.0/number
         distr = cls({element: prob for element in elements})
         if len(distr.keys()) != number:
-            raise BadArgumentException('Some elements occurred multiple times.')
+            raise Exception('Some elements occurred multiple times.')
         return distr
 
     @classmethod
@@ -112,7 +108,7 @@ class FDistr(Generic[T], dict[T, float]):
         FDistr({'a': 0.25, 'b': 0.75})
         """
         if not self:
-            raise EmptyDistributionException('Cannot normalize an empty distribution')
+            raise EmptyDistributionError('Cannot normalize an empty distribution')
         a = sum(self.values())
         for key in self:
             self[key] /= a
@@ -126,21 +122,21 @@ class FDistr(Generic[T], dict[T, float]):
             3. the probabilities sum up to 1 (up to the specified ``tolerance`` to allow for rounding errors).
 
         If the distribution is not valid, it raises one of the following exceptions:
-            * :class:`EmptyDistributionException`: If the distribution is empty.
-            * :class:`InvalidDistributionException`: If the distribution is invalid.
+            * :class:`EmptyDistributionError`: If the distribution is empty.
+            * :class:`InvalidDistributionError`: If the distribution is invalid.
 
 
         >>> FDistr({'x': 0.6, 'y': 0.5}).verify()
         Traceback (most recent call last):
             ...
-        pyutils.finite_distr.InvalidDistributionException: The probabilities do not sum up to 1
+        pyutils.finite_distr.InvalidDistributionError: The probabilities do not sum up to 1
         """
         if not self:
-            raise EmptyDistributionException('The distribution is empty')
+            raise EmptyDistributionError('The distribution is empty')
         if any(val < 0.0 for val in self.values()):
-            raise InvalidDistributionException('Distribution has negative probabilities')
+            raise InvalidDistributionError('Distribution has negative probabilities')
         if abs(sum(self.values()) - 1.0) > tolerance:
-            raise InvalidDistributionException('The probabilities do not sum up to 1')
+            raise InvalidDistributionError('The probabilities do not sum up to 1')
 
     def remove_zeros(self, tolerance: float = 0.0):
         """ Removes entries with a 0 probability.
