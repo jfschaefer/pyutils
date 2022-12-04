@@ -1,5 +1,7 @@
 """ Small library for finite probability distributions.
 
+This file is part of the pyutils package (https://github.com/jfschaefer/pyutils/), which comes with the MIT License.
+
 Finite probability distributions can easily be represented as a dictionary:
 (e.g. ``{"dog": 0.75, "cat": 0.25}``).
 This module introduces the :class:`FiniteDistr` class, which extends
@@ -29,7 +31,7 @@ from __future__ import annotations
 import math
 import random
 from collections import Counter
-from typing import TypeVar, Generic, Optional, Iterable
+from typing import TypeVar, Generic, Optional, Iterable, Hashable
 
 __all__ = ['InvalidDistributionError', 'EmptyDistributionError', 'FDistr']
 
@@ -42,7 +44,7 @@ class EmptyDistributionError(InvalidDistributionError):
     """ An operation is not permitted because the distribution is empty. """
 
 
-T = TypeVar('T')
+T = TypeVar('T', bound=Hashable)
 
 
 class FDistr(Generic[T], dict[T, float]):
