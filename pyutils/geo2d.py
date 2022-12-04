@@ -186,10 +186,24 @@ class Triangle(typing.Generic[T]):
         object.__setattr__(self, 'b', b)
         object.__setattr__(self, 'c', c)
 
-    def area(self) -> float:
+    def signed_area(self) -> float:
         a, b, c = self.a, self.b, self.c
-        return 0.5 * abs(a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y))
+        return 0.5 * ((c.x - a.x) * (c.y - b.y) + (c.y - a.y) * (b.x - c.x))
 
+    def area(self) -> float:
+        return abs(self.signed_area())
+
+    def __add__(self, other) -> Triangle:
+        return Triangle(self.a + other, self.b + other, self.c + other)
+
+    def __radd__(self, other) -> Triangle:
+        return Triangle(self.a + other, self.b + other, self.c + other)
+    
+    def __repr__(self) -> str:
+        return f'Triangle({self.a!r}, {self.b!r}, {self.c!r})'
+
+    def __eq__(self, other):
+        return self.a == other.a and self.b == other.b and self.c == other.c
 
 ################################################################################
 # LINES

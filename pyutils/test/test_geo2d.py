@@ -1,6 +1,6 @@
 import unittest
 
-from pyutils.geo2d import Point, HexVec, HexPoint
+from pyutils.geo2d import Point, HexVec, HexPoint, Triangle, Vec
 
 
 class TestIntervals(unittest.TestCase):
@@ -18,3 +18,16 @@ class TestIntervals(unittest.TestCase):
         # points and vectors should be different
         self.assertNotEqual(2*v, HexPoint(4, 6, -10))
         self.assertEqual(v.hex_norm(), 5)
+
+    def test_triangle_area(self):
+        a, b, c = Point(1, 1), Point(2, 3), Point(6, -1)
+        triangle = Triangle(a, b, c)
+        signed_area = triangle.signed_area()
+        self.assertEqual(signed_area, -6.0)
+        area = triangle.area()
+        self.assertEqual(area, 6.0)
+
+    def test_translate_triangle(self):
+        triangle = Triangle(Point(2, 1), Point(4, 0), Point(3, 1))
+        self.assertEqual(triangle + Vec(1, -2), Triangle(Point(3, -1), Point(5, -2), Point(4, -1)))
+        self.assertEqual(Vec(1, -2) + triangle, Triangle(Point(3, -1), Point(5, -2), Point(4, -1)))
