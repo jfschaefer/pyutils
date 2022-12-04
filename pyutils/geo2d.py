@@ -113,6 +113,11 @@ class Vec(typing.Generic[T], _Cart2dCoords[T]):
     def norm_manhattan(self) -> T:
         return abs(self.x) + abs(self.y)
 
+    def __add__(self, other) -> Vec:
+        if isinstance(other, Vec):
+            return Vec(self.x + other.x, self.y + other.y)
+        return NotImplemented
+
 
 ################################################################################
 # SHAPES
@@ -198,7 +203,7 @@ class Triangle(typing.Generic[T]):
 
     def __radd__(self, other) -> Triangle:
         return Triangle(self.a + other, self.b + other, self.c + other)
-    
+
     def __repr__(self) -> str:
         return f'Triangle({self.a!r}, {self.b!r}, {self.c!r})'
 
