@@ -1,6 +1,6 @@
 import unittest
 
-from pyutils.geo2d import Point, HexVec, HexPoint, Triangle, Vec
+from pyutils.geo2d import Point, HexVec, HexPoint, Triangle, Vec, Cartesianable
 
 
 class TestIntervals(unittest.TestCase):
@@ -12,12 +12,27 @@ class TestIntervals(unittest.TestCase):
         self.assertEqual(str(p), '(2.1, -3.2)')
         self.assertEqual(str(p), format(p, ''))
 
+    def test_cartesianable(self):
+        p = HexVec(1, -1, 0)
+        match p:
+            case Cartesianable():
+                pass
+            case _:
+                self.assertFalse('Failed to match Cartesianable')
+
     def test_hex(self):
         v = HexVec(2, 3, -5)
         self.assertEqual(2*v, HexVec(4, 6, -10))
         # points and vectors should be different
         self.assertNotEqual(2*v, HexPoint(4, 6, -10))
         self.assertEqual(v.hex_norm(), 5)
+
+    def test_hex_rotation(self):
+        self.assertEqual(HexVec(3, -2).rotated(1), HexVec(2, 1))
+        self.assertEqual(HexVec(3, -2).rotated(2), HexVec(-1, 3))
+        self.assertEqual(HexVec(3, -2).rotated(3), -HexVec(3, -2))
+        self.assertEqual(HexVec(3, -2).rotated(0), HexVec(3, -2))
+        self.assertEqual(HexVec(3, -2).rotated(-1), HexVec(3, -2).rotated(5))
 
     def test_triangle_area(self):
         a, b, c = Point(1, 1), Point(2, 3), Point(6, -1)
