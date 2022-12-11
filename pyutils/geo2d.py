@@ -190,61 +190,54 @@ class Vec(typing.Generic[T], _Cart2dCoords[T]):
 ################################################################################
 
 class Rect(typing.Generic[T]):
-    """ The rectangle [x0, x1] x [y0, y1] in a cartesian coordinate system """
-    __slots__ = ('x0', 'y0', 'x1', 'y1')
-    x0: T
-    y0: T
-    x1: T
-    y1: T
+    __slots__ = ('a', 'b')
+    a: Point[T]     # bottom left
+    b: Point[T]     # top right
 
-    def __init__(self, x0: T, y0: T, x1: T, y1: T):
-        object.__setattr__(self, 'x0', x0)
-        object.__setattr__(self, 'y0', y0)
-        object.__setattr__(self, 'x1', x1)
-        object.__setattr__(self, 'y1', y1)
+    def __init__(self, p1: Point[T], p2: Point[T]):
+        a = Point(x = min(p1.x, p2.x), y = min(p1.y, p2.y))
+        b = Point(x = max(p1.x, p2.x), y = max(p1.y, p2.y))
+        object.__setattr__(self, 'a', a)
+        object.__setattr__(self, 'b', b)
 
     def __setattr__(self, key, value):
         raise ImmutableInstanceError(f'{self.__class__.__name__} is immutable')
 
     def __eq__(self, other) -> bool:
-        return self.__class__ == other.__class and self.x0 == other.x0 and self.y0 == other.y0 and \
-            self.x1 == other.x1 and self.y1 == other.y1
+        return self.__class__ == other.__class__ and self.a == other.a and self.b == other.b
 
-    def __hash__(self):
-        return hash((self.x0, self.y0, self.x1, self.y1))
-
-    @classmethod
-    def from_points(cls, point1: Point[T], point2: Point[T]) -> Rect[T]:
-        return cls(min(point1.x, point2.x), min(point1.y, point2.y), max(point1.x, point2.x), max(point1.y, point2.y))
-
-    def __contains__(self, point: Point[T]) -> bool:
-        return self.x0 <= point.x <= self.x1 and self.y0 <= point.y <= self.y1
+    def __contains__(self, point) -> bool:
+        return self.a.x <= point.x <= self.b.x and self.a.y <= point.y <= self.b.y
 
     def __iter__(self) -> typing.Iterator[Point[int]]:
-        for x in range(math.ceil(self.x0), math.floor(self.x1 + 1)):
-            for y in range(math.ceil(self.y0), math.floor(self.y1 + 1)):
+        for x in range(math.ceil(self.a.x), math.floor(self.b.x + 1)):
+            for y in range(math.ceil(self.a.y), math.floor(self.b.y + 1)):
                 yield Point(x, y)
 
     def width(self) -> T:
-        return self.x1 - self.x0
+        return self.b.x - self.a.x
 
     def height(self) -> T:
-        return self.y1 - self.y0
+        return self.b.y - self.a.y
 
-    def empty(self) -> bool:
-        return self.x1 < self.x0 or self.y1 < self.y0
+    def area(self) -> T:
+        return self.width() * self.height()
+
+    def __add__(self, other) -> Rect:
+        return Rect(self.a + other, self.b + other)
+
+    def __radd__(self, other):
+        return Rect(self.a + other, self.b + other)
 
     def discr_sample(self) -> Point[int]:
-        """ Returns a uniformly randomly selected element of self ∩ ZxZ """
-        return Point(random.randint(math.ceil(self.x0), math.floor(self.x1)),
-                     random.randint(math.ceil(self.y0), math.floor(self.y1)))
+        """ Returns a uniformly randomly selected point of self ∩ ZxZ """
+        return Point(random.randint(math.ceil(self.a.x), math.floor(self.b.x)),
+                     random.randint(math.ceil(self.a.y), math.floor(self.b.y)))
 
     def cont_sample(self) -> Point[float]:
         """ Returns a uniformly randomly selected element self """
-        if self.empty():
-            raise EmptyShapeError(f'Cannot sample from an empty {self.__class__.__name__}')
-        return Point(random.random() * (self.x1 - self.x0) + self.x0,
-                     random.random() * (self.y1 - self.y0) + self.y0, )
+        return Point(random.random() * (self.b.x - self.a.x) + self.a.x,
+                     random.random() * (self.b.y - self.a.y) + self.a.y)
 
 
 class Triangle(typing.Generic[T]):

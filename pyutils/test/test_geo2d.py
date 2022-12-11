@@ -1,6 +1,6 @@
 import unittest
 
-from pyutils.geo2d import Point, HexVec, HexPoint, Triangle, Vec, Cartesianable
+from pyutils.geo2d import Point, HexVec, HexPoint, Triangle, Vec, Cartesianable, Rect
 
 
 class TestIntervals(unittest.TestCase):
@@ -46,3 +46,9 @@ class TestIntervals(unittest.TestCase):
         triangle = Triangle(Point(2, 1), Point(4, 0), Point(3, 1))
         self.assertEqual(triangle + Vec(1, -2), Triangle(Point(3, -1), Point(5, -2), Point(4, -1)))
         self.assertEqual(Vec(1, -2) + triangle, Triangle(Point(3, -1), Point(5, -2), Point(4, -1)))
+
+    def test_rect(self):
+        rect = Rect(Point(3, 1), Point(1, 2))
+        vec = Vec(-2, 5)
+        self.assertEqual(rect.area(), 2)
+        self.assertEqual(rect + vec, Rect(Point(1, 6), Point(-1, 7)))
