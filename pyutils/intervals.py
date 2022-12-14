@@ -23,7 +23,6 @@ Example:
 
 from __future__ import annotations
 
-
 import dataclasses
 import enum
 import itertools
@@ -39,6 +38,7 @@ class Bound(enum.Enum):
 
 
 T = typing.TypeVar('T', int, float)
+
 
 @dataclasses.dataclass(frozen=True)
 class Interval(Generic[T]):
@@ -83,9 +83,9 @@ class Interval(Generic[T]):
 
     @property
     def is_empty(self) -> bool:
-        return self.lower_bound > self.upper_bound or\
-               ((self.upper_bound_type == Bound.OPEN or self.lower_bound_type == Bound.OPEN) and
-                self.lower_bound == self.upper_bound)
+        return self.lower_bound > self.upper_bound or \
+            ((self.upper_bound_type == Bound.OPEN or self.lower_bound_type == Bound.OPEN) and
+             self.lower_bound == self.upper_bound)
 
     def sample(self) -> float:
         assert self.lower_bound > -math.inf and self.upper_bound < math.inf
@@ -98,7 +98,7 @@ class Interval(Generic[T]):
             result += 1
         if result < self.upper_bound or result == self.upper_bound and self.upper_bound_type == Bound.CLOSED:
             return result
-        else:   # interval contains no integers
+        else:  # interval contains no integers
             return None
 
     def highest_contained_int(self) -> Optional[int]:
@@ -107,7 +107,7 @@ class Interval(Generic[T]):
             result -= 1
         if result > self.lower_bound or result == self.lower_bound and self.lower_bound_type == Bound.CLOSED:
             return result
-        else:   # interval contains no integers
+        else:  # interval contains no integers
             return None
 
     def int_sample(self) -> int:
@@ -118,21 +118,20 @@ class Interval(Generic[T]):
         assert upper is not None
         return random.randint(lower, upper)
 
-
     def __lt__(self, other: typing.Union[float, 'Interval']):
-        assert not self.is_empty    # TODO: should we return True in this case?
+        assert not self.is_empty  # TODO: should we return True in this case?
         if isinstance(other, Interval):
             assert not other.is_empty
             return self.upper_bound < other.lower_bound or self.upper_bound == other.lower_bound and \
-                   (self.upper_bound_type == Bound.OPEN or other.lower_bound_type == Bound.OPEN)
+                (self.upper_bound_type == Bound.OPEN or other.lower_bound_type == Bound.OPEN)
         return self.upper_bound < other or self.upper_bound == other and self.upper_bound_type == Bound.OPEN
 
     def __gt__(self, other: typing.Union[float, 'Interval']):
-        assert not self.is_empty    # TODO: should we return True in this case?
+        assert not self.is_empty  # TODO: should we return True in this case?
         if isinstance(other, Interval):
             assert not other.is_empty
             return self.lower_bound > other.upper_bound or self.lower_bound == other.upper_bound and \
-                   (self.lower_bound_type == Bound.OPEN or other.upper_bound_type == Bound.OPEN)
+                (self.lower_bound_type == Bound.OPEN or other.upper_bound_type == Bound.OPEN)
         return self.lower_bound > other or self.lower_bound == other and self.lower_bound_type == Bound.OPEN
 
     def split(self, values: list[float], upper_bounds: Bound = Bound.OPEN, lower_bounds: Bound = Bound.CLOSED) -> \
@@ -149,9 +148,9 @@ class Interval(Generic[T]):
 
     def __str__(self) -> str:
         return (
-            {Bound.OPEN: '(', Bound.CLOSED: '['}[self.lower_bound_type] +
-            str(self.lower_bound) + ', ' + str(self.upper_bound) +
-            {Bound.OPEN: ')', Bound.CLOSED: ']'}[self.upper_bound_type]
+                {Bound.OPEN: '(', Bound.CLOSED: '['}[self.lower_bound_type] +
+                str(self.lower_bound) + ', ' + str(self.upper_bound) +
+                {Bound.OPEN: ')', Bound.CLOSED: ']'}[self.upper_bound_type]
         )
 
     def __repr__(self) -> str:

@@ -48,7 +48,7 @@ T = TypeVar('T', bound=Hashable)
 
 
 class FDistr(Generic[T], dict[T, float]):
-    """ A finite probability distribution, based on Python dictionaries.
+    """ A finite probability distribution, based on Python dictionaries. Not thread-safe.
     See the module description for an example.
     """
 
