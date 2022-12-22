@@ -8,14 +8,17 @@ from __future__ import annotations
 import abc
 import enum
 import math
-
 import random
 import re
 import typing
+from fractions import Fraction
 
-__all__ = ['ImmutableInstanceError', 'Point', 'Vec', 'Rect', 'Triangle', 'HexOrientation', 'HexPoint', 'HexVec']
+from .angles import Angle, as_angle, Degrees
 
-T = typing.TypeVar('T', int, float)
+__all__ = ['ImmutableInstanceError', 'EmptyShapeError', 'Point', 'Vec', 'Rect', 'Triangle', 'HexOrientation',
+           'HexPoint', 'HexVec', 'Polygon']
+
+T = typing.TypeVar('T', int, float, Fraction)
 
 
 ################################################################################
@@ -103,12 +106,15 @@ class _Cart2dCoords(typing.Generic[T]):
     def as_tuple(self) -> tuple[T, T]:
         return self.x, self.y
 
+    def __deepcopy__(self, memodict={}):
+        return self.__class__(self.x, self.y)
+
 
 class Point(typing.Generic[T], _Cart2dCoords[T]):
     """ A point in a 2d cartesian coordinate system """
 
     @typing.overload
-    def __add__(self, other: Vec[float]) -> Point[float]:
+    def __add__(self, other: Vec[float] | PolarVec) -> Point[float]:
         ...
 
     @typing.overload
@@ -128,6 +134,10 @@ class Point(typing.Generic[T], _Cart2dCoords[T]):
 
     @typing.overload
     def __sub__(self, other: Vec[int] | Point[int]) -> Vec[T]:
+        ...
+
+    @typing.overload
+    def __sub__(self: Point[Fraction], other: Point[Fraction] | Vec[Fraction] | Point[int] | Vec[int]) -> Vec[Fraction]:
         ...
 
     def __sub__(self, other) -> Vec:
@@ -186,17 +196,47 @@ class Vec(typing.Generic[T], _Cart2dCoords[T]):
 
 
 ################################################################################
+# POLAR COORDINATES
+################################################################################
+
+
+class PolarVec(Cartesianable):
+    __slots__ = ('r', 'phi')
+    r: float
+    phi: Angle
+
+    def __init__(self, r: float, phi: float | Angle):
+        object.__setattr__(self, 'r', r)
+        object.__setattr__(self, 'phi', as_angle(phi))
+
+    def __setattr__(self, key, value):
+        raise ImmutableInstanceError(f'{self.__class__.__name__} is immutable')
+
+    def to_cart(self) -> Vec:
+        return Vec(self.r * self.phi.cos(), self.r * self.phi.sin())
+
+    def rotated(self, angle: float | Angle) -> PolarVec:
+        return PolarVec(self.r, self.phi + as_angle(angle))
+
+    def __add__(self, other):
+        return self.to_cart() + other
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self.r}, {self.phi})'
+
+
+################################################################################
 # SHAPES
 ################################################################################
 
 class Rect(typing.Generic[T]):
     __slots__ = ('a', 'b')
-    a: Point[T]     # bottom left
-    b: Point[T]     # top right
+    a: Point[T]  # bottom left
+    b: Point[T]  # top right
 
     def __init__(self, p1: Point[T], p2: Point[T]):
-        a = Point(x = min(p1.x, p2.x), y = min(p1.y, p2.y))
-        b = Point(x = max(p1.x, p2.x), y = max(p1.y, p2.y))
+        a = Point(x=min(p1.x, p2.x), y=min(p1.y, p2.y))
+        b = Point(x=max(p1.x, p2.x), y=max(p1.y, p2.y))
         object.__setattr__(self, 'a', a)
         object.__setattr__(self, 'b', b)
 
@@ -213,6 +253,9 @@ class Rect(typing.Generic[T]):
         for x in range(math.ceil(self.a.x), math.floor(self.b.x + 1)):
             for y in range(math.ceil(self.a.y), math.floor(self.b.y + 1)):
                 yield Point(x, y)
+
+    def __hash__(self):
+        return hash((self.a, self.b))
 
     def width(self) -> T:
         return self.b.x - self.a.x
@@ -270,6 +313,27 @@ class Triangle(typing.Generic[T]):
 
     def __eq__(self, other):
         return self.a == other.a and self.b == other.b and self.c == other.c
+
+
+class Polygon(typing.Generic[T]):
+    __slots__ = ('vertices',)
+    vertices: tuple[Point[T], ...]
+
+    def __init__(self, vertices: tuple[Point[T], ...]):
+        object.__setattr__(self, 'vertices', vertices)
+
+    @classmethod
+    def regular(cls, number_of_vertices: int, circumradius: float = 1.0, center: Point = Point(0, 0),
+                rotated: float | Angle = Degrees(0)) -> Polygon:
+        # Notes:
+        #  * circumradius may not be very convenient (consider supporting apothem and side length)
+        #  * would it make sense to make a RegularPolygon subclass instead?
+        rotated = as_angle(rotated)
+        angle = Degrees(360/number_of_vertices)
+        return Polygon(tuple(center + PolarVec(circumradius, rotated + n*angle) for n in range(number_of_vertices)))
+
+    def __add__(self, other) -> Polygon:
+        return Polygon(tuple(v + other for v in self.vertices))
 
 
 ################################################################################
@@ -362,8 +426,11 @@ class _HexCoords(typing.Generic[T]):
             case _:
                 raise Exception(f'Unsupported format {format_spec}')
 
+    def __deepcopy__(self, memodict={}):
+        return self.__class__(self.x, self.y, self.z)
 
-class HexPoint(_HexCoords[T], typing.Generic[T]):
+
+class HexPoint(_HexCoords[T], typing.Generic[T], Cartesianable):
     """ Point using hex coordinates """
 
     def __add__(self, other: HexVec[T]) -> HexPoint[T]:
@@ -380,7 +447,7 @@ class HexPoint(_HexCoords[T], typing.Generic[T]):
                 return Point(_cos_30_deg * self.x, self.y + 0.5 * self.x)
 
 
-class HexVec(typing.Generic[T], _HexCoords[T]):
+class HexVec(typing.Generic[T], _HexCoords[T], Cartesianable):
     """ The difference between two HexPoints """
 
     def __abs__(self) -> float:
@@ -392,7 +459,15 @@ class HexVec(typing.Generic[T], _HexCoords[T]):
     def __neg__(self) -> HexVec[T]:
         return HexVec(-self.x, -self.y, -self.z)
 
-    def hex_norm(self) -> float:
+    @typing.overload
+    def hex_norm(self: HexVec[Fraction]) -> Fraction:
+        ...
+
+    @typing.overload
+    def hex_norm(self: HexVec[int] | HexVec[float]) -> Fraction:
+        ...
+
+    def hex_norm(self):
         """ Something like the Manhattan norm for a hexagonal grid """
         return (abs(self.x) + abs(self.y) + abs(self.z)) / 2
 

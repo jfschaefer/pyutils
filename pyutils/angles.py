@@ -6,8 +6,19 @@ import typing
 from fractions import Fraction
 
 
-class UnsupportedOperation(Exception):
-    ...
+__all__ = ['as_angle', 'as_radians', 'Angle', 'Degrees', 'Radians', 'FloatRadians', 'FracRadians']
+
+
+def as_radians(angle: float | Angle) -> Radians:
+    if isinstance(angle, Angle):
+        return angle.to_radians()
+    return FloatRadians(angle)
+
+
+def as_angle(angle: float | Angle) -> Angle:
+    if isinstance(angle, Angle):
+        return angle
+    return FloatRadians(angle)
 
 
 class Angle(abc.ABC):
@@ -20,6 +31,12 @@ class Angle(abc.ABC):
     @property
     @abc.abstractmethod
     def value(self) -> int | float | Fraction: ...
+
+    def sin(self) -> float:
+        return math.sin(self.to_radians().value)
+
+    def cos(self) -> float:
+        return math.cos(self.to_radians().value)
 
     @abc.abstractmethod
     def __abs__(self) -> Angle: ...
@@ -76,6 +93,9 @@ class Degrees(Angle, typing.Generic[_T]):
     def to_degrees(self) -> Degrees:
         return self
 
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self._v})'
+
     def __abs__(self) -> Degrees[_T]:
         return Degrees(abs(self._v))
 
@@ -124,12 +144,6 @@ class Radians(Angle, abc.ABC):
     def to_radians(self) -> Radians:
         return self
 
-    def __new__(cls, angle) -> Radians:
-        # TODO: This is really annoying and results in weird code...
-        if isinstance(angle, Angle):
-            return angle.to_radians()
-        return FloatRadians(angle)
-
     def __hash__(self):
         return hash(self.to_degrees())
 
@@ -139,12 +153,7 @@ class FloatRadians(Radians):
     __matchargs__ = __slots__
     _v: float
 
-    def __new__(cls, *args, **kwargs):
-        return object.__new__(cls)   # "un-overwrite" it
-
     def __init__(self, value: float):
-        if hasattr(self, '_v'):   # the whole Radians.__new__ really messes things up...
-            return
         self._v = value
 
     @property
@@ -154,14 +163,17 @@ class FloatRadians(Radians):
     def to_degrees(self) -> Degrees:
         return Degrees(self._v/math.pi * 180)
 
+    def __repr__(self):
+        return f'{self.__class__.__name__}({self._v})'
+
     def __abs__(self) -> FloatRadians:
         return FloatRadians(abs(self._v))
 
     def __add__(self, other) -> FloatRadians:
-        return FloatRadians(self._v + Radians(other).value)
+        return FloatRadians(self._v + as_radians(other).value)
 
     def __radd__(self, other) -> FloatRadians:
-        return FloatRadians(self._v + Radians(other).value)
+        return FloatRadians(self._v + as_radians(other).value)
 
     def __mul__(self, other) -> FloatRadians:
         if isinstance(other, Angle):
@@ -174,19 +186,19 @@ class FloatRadians(Radians):
         return FloatRadians(self._v * other)
 
     def __eq__(self, other) -> bool:
-        return self._v == Radians(other).value
+        return self._v == as_radians(other).value
 
     def __le__(self, other) -> bool:
-        return self._v <= Radians(other).value
+        return self._v <= as_radians(other).value
 
     def __lt__(self, other) -> bool:
-        return self._v < Radians(other).value
+        return self._v < as_radians(other).value
 
     def __ge__(self, other) -> bool:
-        return self._v >= Radians(other).value
+        return self._v >= as_radians(other).value
 
     def __gt__(self, other) -> bool:
-        return self._v > Radians(other).value
+        return self._v > as_radians(other).value
 
     def __hash__(self):
         return hash(self._v)
@@ -197,12 +209,7 @@ class FracRadians(Radians):
     __matchargs__ = __slots__
     _f: Fraction
 
-    def __new__(cls, *args, **kwargs):
-        return object.__new__(cls)   # "un-overwrite" it
-
     def __init__(self, factor: Fraction):
-        if hasattr(self, '_f'):
-            return
         self._f = factor
 
     def __str__(self) -> str:
@@ -216,13 +223,13 @@ class FracRadians(Radians):
         return FracRadians(abs(self._f))
 
     def __add__(self, other) -> Radians:
-        other = Radians(other)
+        other = as_radians(other)
         if isinstance(other, FracRadians):
             return FracRadians(self._f + other._f)
         return FloatRadians(self.value + other.value)
 
     def __radd__(self, other) -> Radians:
-        other = Radians(other)
+        other = as_radians(other)
         if isinstance(other, FracRadians):
             return FracRadians(self._f + other._f)
         return FloatRadians(self.value + other.value)
@@ -244,23 +251,23 @@ class FracRadians(Radians):
             return FloatRadians(self.value * other)
 
     def __eq__(self, other) -> bool:
-        r = Radians(other)
+        r = as_radians(other)
         return self._f == r._f if isinstance(r, FracRadians) else self.value == r.value
 
     def __le__(self, other) -> bool:
-        r = Radians(other)
+        r = as_radians(other)
         return self._f <= r._f if isinstance(r, FracRadians) else self.value <= r.value
 
     def __lt__(self, other) -> bool:
-        r = Radians(other)
+        r = as_radians(other)
         return self._f < r._f if isinstance(r, FracRadians) else self.value < r.value
 
     def __ge__(self, other) -> bool:
-        r = Radians(other)
+        r = as_radians(other)
         return self._f >= r._f if isinstance(r, FracRadians) else self.value >= r.value
 
     def __gt__(self, other) -> bool:
-        r = Radians(other)
+        r = as_radians(other)
         return self._f > r._f if isinstance(r, FracRadians) else self.value > r.value
 
     def to_degrees(self) -> Degrees:
