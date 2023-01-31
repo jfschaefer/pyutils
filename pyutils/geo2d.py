@@ -329,8 +329,8 @@ class Polygon(typing.Generic[T]):
         #  * circumradius may not be very convenient (consider supporting apothem and side length)
         #  * would it make sense to make a RegularPolygon subclass instead?
         rotated = as_angle(rotated)
-        angle = Degrees(360/number_of_vertices)
-        return Polygon(tuple(center + PolarVec(circumradius, rotated + n*angle) for n in range(number_of_vertices)))
+        angle = Degrees(360 / number_of_vertices)
+        return Polygon(tuple(center + PolarVec(circumradius, rotated + n * angle) for n in range(number_of_vertices)))
 
     def __add__(self, other) -> Polygon:
         return Polygon(tuple(v + other for v in self.vertices))

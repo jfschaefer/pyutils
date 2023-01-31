@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import TypeVar, Iterable, Callable, Any
+from typing import TypeVar, Iterable, Callable
 
 T = TypeVar('T')
 Key = TypeVar('Key')

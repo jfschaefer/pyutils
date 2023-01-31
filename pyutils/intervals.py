@@ -47,7 +47,8 @@ class Interval(Generic[T]):
     upper_bound: T
     upper_bound_type: Bound
 
-    def __contains__(self, x: float) -> bool:
+    def __contains__(self, x) -> bool:
+        # TODO: Also support `Interval.open(1, 5) in Interval.closed(1, 6)`
         if self.lower_bound <= x <= self.upper_bound:
             return ((self.lower_bound_type == Bound.CLOSED or self.lower_bound < x) and
                     (self.upper_bound_type == Bound.CLOSED or x < self.upper_bound))
@@ -118,6 +119,15 @@ class Interval(Generic[T]):
         assert upper is not None
         return random.randint(lower, upper)
 
+    def as_range(self) -> range:
+        lower_bound = math.ceil(self.lower_bound)
+        if lower_bound == self.lower_bound and self.lower_bound_type == Bound.OPEN:
+            lower_bound += 1
+        upper_bound = math.floor(self.upper_bound)
+        if upper_bound == self.upper_bound and self.upper_bound_type == Bound.OPEN:
+            upper_bound -= 1
+        return range(lower_bound, upper_bound + 1)
+
     def __lt__(self, other: typing.Union[float, 'Interval']):
         assert not self.is_empty  # TODO: should we return True in this case?
         if isinstance(other, Interval):
@@ -148,9 +158,9 @@ class Interval(Generic[T]):
 
     def __str__(self) -> str:
         return (
-                {Bound.OPEN: '(', Bound.CLOSED: '['}[self.lower_bound_type] +
-                str(self.lower_bound) + ', ' + str(self.upper_bound) +
-                {Bound.OPEN: ')', Bound.CLOSED: ']'}[self.upper_bound_type]
+            {Bound.OPEN: '(', Bound.CLOSED: '['}[self.lower_bound_type] +
+            str(self.lower_bound) + ', ' + str(self.upper_bound) +
+            {Bound.OPEN: ')', Bound.CLOSED: ']'}[self.upper_bound_type]
         )
 
     def __repr__(self) -> str:

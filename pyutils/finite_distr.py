@@ -64,7 +64,7 @@ class FDistr(Generic[T], dict[T, float]):
         if not elements:
             raise EmptyDistributionError('Cannot generate a uniform distribution over the empty set.')
         number = len(elements)  # type: ignore
-        prob = 1.0/number
+        prob = 1.0 / number
         distr = cls({element: prob for element in elements})
         if len(distr.keys()) != number:
             raise Exception('Some elements occurred multiple times.')

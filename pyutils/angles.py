@@ -161,7 +161,7 @@ class FloatRadians(Radians):
         return self._v
 
     def to_degrees(self) -> Degrees:
-        return Degrees(self._v/math.pi * 180)
+        return Degrees(self._v / math.pi * 180)
 
     def __repr__(self):
         return f'{self.__class__.__name__}({self._v})'
