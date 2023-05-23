@@ -144,7 +144,7 @@ class Interval(Generic[T]):
                 (self.lower_bound_type == Bound.OPEN or other.upper_bound_type == Bound.OPEN)
         return self.lower_bound > other or self.lower_bound == other and self.lower_bound_type == Bound.OPEN
 
-    def split(self, values: list[float], upper_bounds: Bound = Bound.OPEN, lower_bounds: Bound = Bound.CLOSED) -> \
+    def split(self, values: list[float], lower_bounds: Bound = Bound.CLOSED, upper_bounds: Bound = Bound.OPEN) -> \
             Iterator['Interval']:
         """ Splits an interval into multiple intervals.
         For example, splitting [a, b] at the values x and y would result in the intervals [a, x), [x, y), [y, b]. """

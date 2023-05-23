@@ -30,6 +30,16 @@ class ImmutableInstanceError(AttributeError):
     Many objects in this library are immutable to enable hashing. """
 
 
+class _ImmutableMixin:
+    __slots__: tuple[str, ...]
+
+    def __setattr__(self, key, value):
+        if key in self.__slots__ and not hasattr(self, key):
+            object.__setattr__(self, key, value)
+        else:
+            raise ImmutableInstanceError(f'{self.__class__.__name__} is immutable')
+
+
 class EmptyShapeError(Exception):
     """ The shape is empty, which makes the intended action impossible """
 
@@ -67,7 +77,7 @@ class Cartesianable(abc.ABC):
 _cart2d_format_regex = re.compile(r'^(?P<lpar>[([<⟨{]?)(?P<sep>[,;] ?)(?P<rpar>[)\]>⟩}]?)(:(?P<compformat>.*))?$')
 
 
-class _Cart2dCoords(typing.Generic[T]):
+class _Cart2dCoords(typing.Generic[T], _ImmutableMixin):
     __slots__ = ('x', 'y')
     __match_args__ = ('x', 'y')
 
@@ -83,9 +93,6 @@ class _Cart2dCoords(typing.Generic[T]):
 
     def __hash__(self):
         return hash((self.x, self.y))
-
-    def __setattr__(self, key, value):
-        raise ImmutableInstanceError(f'{self.__class__.__name__} is immutable')
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}({self.x}, {self.y})'
@@ -200,7 +207,7 @@ class Vec(typing.Generic[T], _Cart2dCoords[T]):
 ################################################################################
 
 
-class PolarVec(Cartesianable):
+class PolarVec(Cartesianable, _ImmutableMixin):
     __slots__ = ('r', 'phi')
     r: float
     phi: Angle
@@ -208,9 +215,6 @@ class PolarVec(Cartesianable):
     def __init__(self, r: float, phi: float | Angle):
         object.__setattr__(self, 'r', r)
         object.__setattr__(self, 'phi', as_angle(phi))
-
-    def __setattr__(self, key, value):
-        raise ImmutableInstanceError(f'{self.__class__.__name__} is immutable')
 
     def to_cart(self) -> Vec:
         return Vec(self.r * self.phi.cos(), self.r * self.phi.sin())
@@ -229,7 +233,7 @@ class PolarVec(Cartesianable):
 # SHAPES
 ################################################################################
 
-class Rect(typing.Generic[T]):
+class Rect(typing.Generic[T], _ImmutableMixin):
     __slots__ = ('a', 'b')
     a: Point[T]  # bottom left
     b: Point[T]  # top right
@@ -239,9 +243,6 @@ class Rect(typing.Generic[T]):
         b = Point(x=max(p1.x, p2.x), y=max(p1.y, p2.y))
         object.__setattr__(self, 'a', a)
         object.__setattr__(self, 'b', b)
-
-    def __setattr__(self, key, value):
-        raise ImmutableInstanceError(f'{self.__class__.__name__} is immutable')
 
     def __eq__(self, other) -> bool:
         return self.__class__ == other.__class__ and self.a == other.a and self.b == other.b
@@ -341,7 +342,7 @@ class Polygon(typing.Generic[T]):
 ################################################################################
 
 
-class LineSegment(typing.Generic[T]):
+class LineSegment(typing.Generic[T], _ImmutableMixin):
     """ An ordered line segment """
     __slots__ = ('a', 'b')
     a: Point[T]
@@ -350,9 +351,6 @@ class LineSegment(typing.Generic[T]):
     def __init__(self, a: Point[T], b: Point[T]):
         object.__setattr__(self, 'a', a)
         object.__setattr__(self, 'b', b)
-
-    def __setattr__(self, key, value):
-        raise ImmutableInstanceError(f'{self.__class__.__name__} is immutable')
 
     def __eq__(self, other):
         """ Note that the line segment is ordered, i.e. (a, b) is different from the line segment (b, a) """
@@ -388,7 +386,7 @@ class HexOrientation(enum.Enum):
 _cos_30_deg = math.cos(30 * math.pi / 180)
 
 
-class _HexCoords(typing.Generic[T]):
+class _HexCoords(typing.Generic[T], _ImmutableMixin):
     """ Hex coordinates (x, y, z) with the invariant x+y+z=0 """
     __slots__ = ('x', 'y', 'z')  # using slots=True for dataclass doesn't seem to play well with Generic
     x: T
@@ -405,9 +403,6 @@ class _HexCoords(typing.Generic[T]):
 
     def __hash__(self):
         return hash((self.x, self.y, self.z))
-
-    def __setattr__(self, key, value):
-        raise ImmutableInstanceError(f'{self.__class__.__name__} is immutable')
 
     def is_valid(self, epsilon: float = 1e-12) -> bool:
         return abs(self.x + self.y + self.z) <= epsilon

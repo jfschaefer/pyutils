@@ -1,3 +1,4 @@
+import pickle
 import unittest
 
 from pyutils.geo2d import Point, HexVec, HexPoint, Triangle, Vec, Cartesianable, Rect
@@ -52,3 +53,9 @@ class TestIntervals(unittest.TestCase):
         vec = Vec(-2, 5)
         self.assertEqual(rect.area(), 2)
         self.assertEqual(rect + vec, Rect(Point(1, 6), Point(-1, 7)))
+
+    def test_pickle(self):
+        point = Point(3, 1)
+        data = pickle.dumps(point)
+        point2 = pickle.loads(data)
+        self.assertEqual(point, point2)

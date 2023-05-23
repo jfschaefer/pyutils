@@ -83,6 +83,10 @@ class FDistr(Generic[T], dict[T, float]):
         distr.normalize()
         return distr
 
+    @classmethod
+    def singleton(cls, value: T) -> FDistr[T]:
+        return cls({value: 1.0})
+
     def sample(self, n: Optional[int] = None) -> T | list[T]:
         """ Samples from the distribution.
 
@@ -112,6 +116,8 @@ class FDistr(Generic[T], dict[T, float]):
         if not self:
             raise EmptyDistributionError('Cannot normalize an empty distribution')
         a = sum(self.values())
+        if not a:
+            raise InvalidDistributionError('Cannot normalize a distribution of probabilities sum up to 0')
         for key in self:
             self[key] /= a
 
