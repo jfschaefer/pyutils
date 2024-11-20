@@ -155,8 +155,11 @@ class Point(typing.Generic[T], _Cart2dCoords[T]):
         return NotImplemented
 
 
-class Vec(typing.Generic[T], _Cart2dCoords[T]):
+class Vec(typing.Generic[T], _Cart2dCoords[T], Cartesianable):
     """ A vector in a 2d cartesian coordinate system """
+
+    def to_cart(self) -> Vec[T]:
+        return self
 
     def __neg__(self) -> Vec[T]:
         return Vec(-self.x, -self.y)
@@ -200,6 +203,17 @@ class Vec(typing.Generic[T], _Cart2dCoords[T]):
         if isinstance(other, Point):
             return Point(self.x + other.x, self.y + other.y)
         return NotImplemented
+
+    def to_polar(self) -> PolarVec:
+        r = abs(self)
+        phi = math.atan2(self.y, self.x)
+        return PolarVec(r, phi)
+
+    def rotated(self, angle: float | Angle) -> Vec:
+        return self.to_polar().rotated(angle).to_cart()   # TODO: in-line conversion to cartesian coordinates
+
+    def get_angle_to(self, other: Vec) -> Angle:
+        return as_angle(math.atan2(other.y, other.x) - math.atan2(self.y, self.x))
 
 
 ################################################################################
@@ -337,6 +351,48 @@ class Polygon(typing.Generic[T]):
         return Polygon(tuple(v + other for v in self.vertices))
 
 
+class Circle(typing.Generic[T], _ImmutableMixin):
+    __slots__ = ('center', 'radius')
+    center: Point[T]
+    radius: T
+
+    def __init__(self, center: Point[T], radius: T):
+        object.__setattr__(self, 'center', center)
+        object.__setattr__(self, 'radius', radius)
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}({self.center!r}, {self.radius!r})'
+
+
+    def get_intersection(self, other: Ray) -> list[Point[float]]:
+        px, py = other.start.x, other.start.y
+        dx, dy = other.direction.x, other.direction.y
+        cx, cy = self.center.x, self.center.y
+        r = self.radius
+
+        a = dx * dx + dy * dy
+        b = 2 * (dx * (px - cx) + dy * (py - cy))
+        c = (px - cx) * (px - cx) + (py - cy) * (py - cy) - r * r
+
+        discriminant = b * b - 4 * a * c
+        if discriminant < 0:
+            return []
+        if discriminant == 0:
+            t = -b / (2 * a)
+            if t < 0:
+                return []
+            return [Point(px + t * dx, py + t * dy)]
+        t1 = (-b + math.sqrt(discriminant)) / (2 * a)
+        t2 = (-b - math.sqrt(discriminant)) / (2 * a)
+        if t1 < 0 and t2 < 0:
+            return []
+        if t1 < 0:
+            return [Point(px + t2 * dx, py + t2 * dy)]
+        if t2 < 0:
+            return [Point(px + t1 * dx, py + t1 * dy)]
+        return [Point(px + t1 * dx, py + t1 * dy), Point(px + t2 * dx, py + t2 * dy)]
+
+
 ################################################################################
 # LINES
 ################################################################################
@@ -359,6 +415,9 @@ class LineSegment(typing.Generic[T], _ImmutableMixin):
     def __hash__(self):
         return hash((self.a, self.b))
 
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}({self.a!r}, {self.b!r})'
+
     def get_point_at(self, frac: float) -> Point[float]:
         """ returns frac*a + (1-frac)*to """
         return self.a + (1 - frac) * (self.b - self.a)
@@ -368,6 +427,41 @@ class LineSegment(typing.Generic[T], _ImmutableMixin):
 
     def length(self) -> float:
         return abs(self.b - self.a)
+
+
+class Ray(typing.Generic[T], _ImmutableMixin):
+    """ A ray starting at a point and extending infinitely in one direction """
+    __slots__ = ('start', 'direction')
+    start: Point[T]
+    direction: Vec[T]
+
+    def __init__(self, start: Point[T], direction: Vec[T] | PolarVec):
+        object.__setattr__(self, 'start', start)
+        object.__setattr__(self, 'direction', direction.to_cart())
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}({self.start!r}, {self.direction!r})'
+
+    def get_intersection(self, other: LineSegment[T]) -> Point[float] | Point[Fraction] | None:
+        """ Returns the intersection point of the ray with the line segment or None if it doesn't intersect """
+        sx, sy, dx, dy = self.start.x, self.start.y, self.direction.x, self.direction.y
+        ax, ay, bx, by = other.a.x, other.a.y, other.b.x, other.b.y
+        det = - dx * (by - ay) + dy * (bx - ax)
+        if det == 0:
+            return None
+        m11 = -by + ay
+        m12 = bx - ax
+        m21 = -dy
+        m22 = dx
+        v1 = ax - sx
+        v2 = ay - sy
+        t1 = (m11 * v1 + m12 * v2) / det
+        if t1 < 0:
+            return None
+        t2 = (m21 * v1 + m22 * v2) / det
+        if t2 < 0 or t2 > 1:
+            return None
+        return Point(sx + t1 * dx, sy + t1 * dy)
 
 
 ################################################################################

@@ -117,7 +117,7 @@ class FDistr(Generic[T], dict[T, float]):
             raise EmptyDistributionError('Cannot normalize an empty distribution')
         a = sum(self.values())
         if not a:
-            raise InvalidDistributionError('Cannot normalize a distribution of probabilities sum up to 0')
+            raise InvalidDistributionError('Cannot normalize a distribution of probabilities that sum up to 0')
         for key in self:
             self[key] /= a
 

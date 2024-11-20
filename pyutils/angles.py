@@ -45,6 +45,9 @@ class Angle(abc.ABC):
     def __add__(self, other) -> Angle: ...
 
     @abc.abstractmethod
+    def __sub__(self, other) -> Angle: ...
+
+    @abc.abstractmethod
     def __radd__(self, other) -> Angle: ...
 
     @abc.abstractmethod
@@ -101,6 +104,9 @@ class Degrees(Angle, typing.Generic[_T]):
 
     def __add__(self, other) -> Degrees:
         return Degrees(self._v + Degrees(other).value)
+
+    def __sub__(self, other) -> Degrees:
+        return Degrees(self._v - Degrees(other).value)
 
     def __radd__(self, other) -> Degrees:
         return Degrees(self._v + Degrees(other).value)
@@ -175,6 +181,9 @@ class FloatRadians(Radians):
     def __radd__(self, other) -> FloatRadians:
         return FloatRadians(self._v + as_radians(other).value)
 
+    def __sub__(self, other) -> FloatRadians:
+        return FloatRadians(self._v - as_radians(other).value)
+
     def __mul__(self, other) -> FloatRadians:
         if isinstance(other, Angle):
             raise ValueError('Multiplying two angles is not supported.')
@@ -227,6 +236,12 @@ class FracRadians(Radians):
         if isinstance(other, FracRadians):
             return FracRadians(self._f + other._f)
         return FloatRadians(self.value + other.value)
+
+    def __sub__(self, other) -> Radians:
+        other = as_radians(other)
+        if isinstance(other, FracRadians):
+            return FracRadians(self._f - other._f)
+        return FloatRadians(self.value - other.value)
 
     def __radd__(self, other) -> Radians:
         other = as_radians(other)
